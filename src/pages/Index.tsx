@@ -1,12 +1,14 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import Icon from '@/components/ui/icon';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('commands');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const commands = [
     {
@@ -71,8 +73,33 @@ const Index = () => {
       answer: 'Используйте InlineKeyboardMarkup для создания кнопок...',
       timestamp: '12 минут назад',
       user: 'Дмитрий'
+    },
+    {
+      id: 4,
+      question: 'Как отправить фото через бота?',
+      answer: 'Используйте метод sendPhoto с file_id или URL изображения...',
+      timestamp: '25 минут назад',
+      user: 'Елена'
+    },
+    {
+      id: 5,
+      question: 'Что такое InlineQuery?',
+      answer: 'InlineQuery позволяет боту работать в любом чате через @mention...',
+      timestamp: '1 час назад',
+      user: 'Сергей'
     }
   ];
+
+  const filteredHistory = useMemo(() => {
+    if (!searchQuery.trim()) return recentHistory;
+    
+    const query = searchQuery.toLowerCase();
+    return recentHistory.filter(item => 
+      item.question.toLowerCase().includes(query) ||
+      item.answer.toLowerCase().includes(query) ||
+      item.user.toLowerCase().includes(query)
+    );
+  }, [searchQuery]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-accent/10">
@@ -223,8 +250,41 @@ const Index = () => {
                 <CardDescription>История AI-ответов на вопросы пользователей</CardDescription>
               </CardHeader>
               <CardContent className="pt-6">
+                <div className="mb-6">
+                  <div className="relative">
+                    <Icon name="Search" size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      placeholder="Поиск по вопросам, ответам или пользователям..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-10 h-12 text-base border-2 focus:border-primary transition-colors"
+                    />
+                    {searchQuery && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setSearchQuery('')}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 p-0 hover:bg-muted"
+                      >
+                        <Icon name="X" size={16} />
+                      </Button>
+                    )}
+                  </div>
+                  {searchQuery && (
+                    <p className="text-sm text-muted-foreground mt-2 ml-1">
+                      Найдено результатов: <span className="font-semibold text-primary">{filteredHistory.length}</span>
+                    </p>
+                  )}
+                </div>
+                {filteredHistory.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Icon name="SearchX" size={48} className="mx-auto text-muted-foreground mb-4" />
+                    <p className="text-lg font-medium text-muted-foreground mb-2">Ничего не найдено</p>
+                    <p className="text-sm text-muted-foreground">Попробуйте изменить поисковый запрос</p>
+                  </div>
+                ) : (
                 <div className="space-y-6">
-                  {recentHistory.map((item, index) => (
+                  {filteredHistory.map((item, index) => (
                     <div 
                       key={item.id} 
                       className="border-l-4 border-primary pl-6 pb-6 relative animate-fade-in hover:border-secondary transition-colors"
@@ -264,12 +324,15 @@ const Index = () => {
                     </div>
                   ))}
                 </div>
+                )}
+                {filteredHistory.length > 0 && (
                 <div className="mt-8 text-center">
                   <Button className="bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity">
                     <Icon name="RefreshCw" size={18} className="mr-2" />
                     Загрузить больше
                   </Button>
                 </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
